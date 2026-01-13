@@ -2,88 +2,27 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  
-  <!-- Preconnect to external domains for faster loading -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  
-  <!-- Favicon (modern approach) -->
-  <link rel="icon" type="image/png" sizes="128x128" href="%PUBLIC_URL%/KikiB.png">
-  <link rel="apple-touch-icon" href="%PUBLIC_URL%/KikiB.png">
-  
-  <!-- Viewport for responsive design -->
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  
-  <!-- PWA Meta Tags -->
-  <meta name="description" content="KikiByte AI Study Assistant - Your intelligent study companion for personalized learning">
-  <meta name="theme-color" content="#4b7bec">
-  <meta name="keywords" content="AI, study assistant, learning, education, tutor, KikiByte">
-  
-  <!-- Open Graph / Social Media Meta Tags -->
-  <meta property="og:title" content="KByteX - AI Study Assistant">
-  <meta property="og:description" content="Your intelligent study companion for personalized learning">
-  <meta property="og:image" content="%PUBLIC_URL%/KikiB.png">
-  <meta property="og:url" content="https://kbytex.com">
-  <meta property="og:type" content="website">
-  
-  <!-- Twitter Card Meta Tags -->
-  <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="KByteX - AI Study Assistant">
-  <meta name="twitter:description" content="Your intelligent study companion for personalized learning">
-  <meta name="twitter:image" content="%PUBLIC_URL%/KikiB.png">
-  
-  <!-- iOS PWA Support -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="KByteX">
-  
-  <!-- Android PWA Support -->
-  <meta name="mobile-web-app-capable" content="yes">
-  
-  <!-- Preload critical resources -->
-  <link rel="preload" href="%PUBLIC_URL%/KikiB.png" as="image">
-  
-  <title>KByteX - AI Study Assistant</title>
+
+  <link rel="icon" type="image/png" sizes="128x128" href="%PUBLIC_URL%/KikiB.png" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+   <meta name="description" content="KikiByte AI Study Assistant" />
+
+  <title>KByteX</title>
 </head>
 
-<body>
-  <noscript>
-    <div style="
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      background: linear-gradient(135deg, #4b7bec 0%, #3867d6 100%);
-      color: white;
-      text-align: center;
-      padding: 20px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    ">
-      <div>
-        <h1 style="font-size: 24px; margin-bottom: 20px;">⚠️ JavaScript Required</h1>
-        <p style="font-size: 16px; margin-bottom: 20px;">
-          KByteX requires JavaScript to run. Please enable JavaScript in your browser settings to continue.
-        </p>
-        <p style="font-size: 14px; opacity: 0.8;">
-          If you need assistance, check your browser's help documentation for enabling JavaScript.
-        </p>
-      </div>
-    </div>
-  </noscript>
-  
-  <div id="root"></div>
-  
-  <!-- Performance optimizations -->
-  <script>
-    // Remove no-js class if JavaScript is enabled
-    document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/, 'js');
-    
-    // Service worker registration (optional)
-    if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/service-worker.js');
-      });
-    }
-  </script>
-</body>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+    <!--
+      This HTML file is a template.
+      If you open it directly in the browser, you will see an empty page.
+
+      You can add webfonts, meta tags, or analytics to this file.
+      The build step will place the bundled scripts into the <body> tag.
+
+      To begin the development, run `npm start` or `yarn start`.
+      To create a production bundle, use `npm run build` or `yarn build`.
+    -->
+  </body>
 </html>

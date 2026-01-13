@@ -1,4 +1,8 @@
-/* Reset and Base Styles */
+body, input, textarea, button {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
 * {
   box-sizing: border-box;
   margin: 0;
@@ -1089,13 +1093,15 @@
     background-color: #1a1a1a;
   }
   
-  .message .content {
-    background-color: #2d3748;
-    color: #e2e8f0;
-  }
+ 
   
+ .message.ai .content {
+    background-color: #1f2937;
+    color: #f9fafb;
+  }
+
   .message.user .content {
-    background-color: #2c5282;
+    background-color: #2563eb;
     color: white;
   }
   

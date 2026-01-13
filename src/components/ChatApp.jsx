@@ -23,7 +23,10 @@ export default function ChatApp({ resetTrigger, onClearChat }) {
   });
   const [needsApiKey, setNeedsApiKey] = useState(false);
   const [lastResponseCost, setLastResponseCost] = useState(null);
-  
+  const [apiBannerDismissed, setApiBannerDismissed] = useState(
+  localStorage.getItem("api_banner_dismissed") === "true"
+);
+
   // ADD THIS STATE: Track if we've shown the tip already
   const [hasShownReminder, setHasShownReminder] = useState(false);
 
@@ -122,9 +125,10 @@ export default function ChatApp({ resetTrigger, onClearChat }) {
         });
         
         // Only show API key banner if not using fallback
-        if (!hasApiKey && !data.usage?.using_fallback) {
-          setNeedsApiKey(true);
-        }
+       if (!hasApiKey && !data.usage?.using_fallback && !apiBannerDismissed) {
+  setNeedsApiKey(true);
+}
+
       }
     } catch (err) {
       console.error("Failed to check usage:", err);
@@ -250,9 +254,12 @@ export default function ChatApp({ resetTrigger, onClearChat }) {
             isApiKeyPrompt: true,
           };
           // Set a timer to show the API key banner
-          setTimeout(() => {
-            setNeedsApiKey(true);
-          }, 500);
+   if (!apiBannerDismissed) {
+  setTimeout(() => {
+    setNeedsApiKey(true);
+  }, 500);
+}
+
         } else {
           // No API key available at all
           apiKeyMessage = {
@@ -398,7 +405,8 @@ export default function ChatApp({ resetTrigger, onClearChat }) {
   return (
     <div className="chat-container">
       {/* API Key Recommendation Banner */}
-      {needsApiKey && (
+     {needsApiKey && !apiBannerDismissed && (
+
         <div className="api-key-banner">
           <div className="api-key-banner-content">
             <span>
@@ -418,7 +426,16 @@ export default function ChatApp({ resetTrigger, onClearChat }) {
                 </>
               )}
             </span>
-            <button className="close-banner" onClick={() => setNeedsApiKey(false)}>×</button>
+<button
+  className="close-banner"
+  onClick={() => {
+    setNeedsApiKey(false);
+    setApiBannerDismissed(true);
+    localStorage.setItem("api_banner_dismissed", "true");
+  }}
+>
+  ×
+</button>
           </div>
         </div>
       )}

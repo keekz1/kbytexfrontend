@@ -246,11 +246,7 @@ export default function Login() {
           )}
         </div>
         
-        {isRegistering && (
-          <div className="registration-info">
-            <p><strong>Note:</strong> After registration, you'll need to login separately with your credentials.</p>
-          </div>
-        )}
+         
       </div>
     </div>
   );

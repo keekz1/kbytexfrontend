@@ -294,8 +294,11 @@
 .message.ai .content {
   background-color: #ffffff;
   border: 1px solid #e5e7eb;
+  /* Remove any text-shadow or complex backgrounds if present */
+  text-shadow: none;
+  /* Use solid background, not gradients */
+  background-image: none !important;
 }
-
 /* Special Message Types */
 .message.upgrade-message .content {
   background: linear-gradient(135deg, #fff9e6, #ffecb3);
@@ -799,17 +802,14 @@
 
 /* Dark mode support */
 @media (prefers-color-scheme: dark) {
-  .chat-container {
-    background-color: #1a1a1a;
-  }
-  
-  .messages {
-    background-color: #1a1a1a;
-  }
+  /* ... other dark mode styles ... */
   
   .message .content {
     background-color: #2d3748;
     color: #e2e8f0;
+    /* Add font smoothing */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   
   .message.user .content {
@@ -817,26 +817,39 @@
     color: white;
   }
   
+  /* REPLACE GRADIENTS WITH SOLID COLORS: */
   .message.upgrade-message .content {
-    background: linear-gradient(135deg, #2d3748, #4a5568);
+    background: #374151 !important; /* Solid color */
     border-left: 4px solid #f6ad55;
+    background-image: none !important;
   }
   
   .message.apikey-message .content {
-    background: linear-gradient(135deg, #2d3748, #4a5568);
+    background: #374151 !important; /* Solid color */
     border-left: 4px solid #f6ad55;
+    background-image: none !important;
   }
   
-  .input-area {
-    background-color: #2d3748;
-    border-top-color: #4a5568;
+  .message.limit-message .content {
+    background: #4c1d95 !important; /* Solid purple */
+    border-left: 4px solid #e91e63;
+    background-image: none !important;
   }
   
+  .message.reminder-message .content {
+    background: #92400e !important; /* Solid amber */
+    border-left: 4px solid #f59e0b;
+    background-image: none !important;
+  }
+  
+  /* Also add font smoothing to input areas */
   .input-area input {
     background: #4a5568;
     border-color: #718096;
     color: #e2e8f0;
+    -webkit-font-smoothing: antialiased;
   }
+ 
   
   .control-bar {
     background: #2d3748;

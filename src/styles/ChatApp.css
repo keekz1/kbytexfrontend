@@ -1115,18 +1115,18 @@ body, input, textarea, button {
     border-left: 4px solid #f6ad55;
   }
   
-  .input-area   {
-    background-color: #111827 !important;
-    color: #f9fafb !important;
+  .input-area {
+    background-color: #111827;
+    border-top-color: #374151;
+  }
+
+  .input-area input {
+    background: #1f2937;
+    color: #f9fafb;
     border-color: #374151;
     -webkit-text-fill-color: #f9fafb;
   }
 }
-  .input-area input {
-    background: #111827;
-    color: #f9fafb;
-    border-color: #374151;
-  }
   
   .control-bar {
     background: #2d3748;

@@ -1115,11 +1115,13 @@ body, input, textarea, button {
     border-left: 4px solid #f6ad55;
   }
   
-  .input-area {
-    background-color: #2d3748;
-    border-top-color: #4a5568;
+  .input-area   {
+    background-color: #111827 !important;
+    color: #f9fafb !important;
+    border-color: #374151;
+    -webkit-text-fill-color: #f9fafb;
   }
-  
+}
   .input-area input {
     background: #111827;
     color: #f9fafb;

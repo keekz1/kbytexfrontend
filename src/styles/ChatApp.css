@@ -1156,7 +1156,7 @@ body, input, textarea, button {
     background: #4a5568;
     color: #e2e8f0;
   }
-}
+ 
 /* Special Message Types */
 .message.upgrade-message .content {
   background: linear-gradient(135deg, #fff9e6, #ffecb3);

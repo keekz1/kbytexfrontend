@@ -1268,8 +1268,18 @@ body, input, textarea, button {
 }
 
 .input-area input:focus {
-  border-color: #4b7bec;
-  background: #ffffff;
+  border-color: #2563eb;
+}
+
+/* Button */
+.input-area button {
+  padding: 12px 16px;
+  border-radius: 20px;
+  border: none;
+  background-color: #2563eb;
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
 }
 
 .input-area input:disabled {
@@ -1278,20 +1288,7 @@ body, input, textarea, button {
   opacity: 0.6;
 }
 
-.input-area button {
-  padding: 10px 16px;
-  border-radius: 20px;
-  border: none;
-  background-color: #4b7bec;
-  color: white;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 14px;
-  min-width: 60px;
-  flex-shrink: 0;
-  transition: background 0.3s;
-}
-
+ 
 .input-area button:hover:not(:disabled) {
   background-color: #3867d6;
 }

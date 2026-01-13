@@ -598,7 +598,7 @@ export default function ChatApp({ resetTrigger, onClearChat }) {
       <div className="input-area">
         <input
           type="text"
-          placeholder={`Ask your study assistant (using ${usage.provider_name})...`}
+          placeholder={`Ask your  assistant (using ${usage.provider_name})...`}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyPress={handleKeyPress}

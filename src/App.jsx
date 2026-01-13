@@ -1,64 +1,168 @@
 // App.jsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext"; // Add this
+import { useAuth } from "./context/AuthContext"; // Add this
+import ChatApp from "./components/ChatApp";
+import Login from "./pages/Login"; // This should now work
+import Profile from "./pages/profile";
+import DocumentsPage from "./pages/DocumentPage";
+import DocumentUpload from "./components/DocumentUpload"; 
+import "./styles/Header.css";
+import Header from "./components/Header";
 
-export default function App() {
-  const [prompt, setPrompt] = useState("");
-  const [response, setResponse] = useState("");
-  const [loading, setLoading] = useState(false);
+// Create a wrapper component that uses AuthContext
+function AppContent() {
+  const { isAuthenticated, logout } = useAuth();
+  const [resetTrigger, setResetTrigger] = useState(false);
+  const [showDocumentUpload, setShowDocumentUpload] = useState(false);
+  const [uploadedDocuments, setUploadedDocuments] = useState([]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!prompt) return;
+  // Fetch user documents when authenticated
+  useEffect(() => {
+    const fetchUserDocuments = async () => {
+      if (isAuthenticated) {
+        try {
+          const token = localStorage.getItem("access_token");
+          const response = await fetch("https://hadsxk-production.up.railway.app/api/documents/", {
+            headers: {
+              "Authorization": `Bearer ${token}`,
+            },
+          });
 
-    setLoading(true);
-    setResponse("");
+          if (response.ok) {
+            const data = await response.json();
+            setUploadedDocuments(data.documents || []);
+          }
+        } catch (err) {
+          console.error("Error fetching documents:", err);
+        }
+      }
+    };
 
+    fetchUserDocuments();
+  }, [isAuthenticated]);
+
+  const clearMemory = async () => {
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/ai/", {
+      const res = await fetch("https://hadsxk-production.up.railway.app/api/clear-memory/", {
         method: "POST",
         headers: {
+          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
           "Content-Type": "application/json",
-          "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY4MDA1ODU2LCJpYXQiOjE3NjgwMDIyNTYsImp0aSI6IjgzNjFkY2RmMzk4NDRkZTBiZWIxMWRhODY3ZWJlODMxIiwidXNlcl9pZCI6IjEifQ.QmSL6z8fWJEHhsZCWU2tn5klSHLFFdJ-F1bvvA-7HK8"
         },
-        body: JSON.stringify({
-          prompt: prompt,
-          subject: "Python",
-          difficulty: "Beginner"
-        })
       });
 
       const data = await res.json();
-      setResponse(data.answer || "No response received.");
+      alert(data.message);
+      setResetTrigger(prev => !prev);
     } catch (err) {
       console.error(err);
-      setResponse("Error connecting to the server.");
-    } finally {
-      setLoading(false);
+      alert("Failed to clear chat");
     }
   };
 
-  return (
-    <div style={{ padding: "2rem", fontFamily: "Arial, sans-serif" }}>
-      <h1>AI Study Helper</h1>
-      <form onSubmit={handleSubmit} style={{ marginBottom: "1rem" }}>
-        <input
-          type="text"
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          placeholder="Ask a question..."
-          style={{ width: "300px", padding: "0.5rem" }}
+  const handleDocumentUploadSuccess = (data) => {
+    setUploadedDocuments(prev => [data.document, ...prev]);
+    setShowDocumentUpload(false);
+    alert(`✅ Document "${data.document.file_name}" uploaded successfully!`);
+    fetchUserDocuments();
+  };
+
+  const fetchUserDocuments = async () => {
+    try {
+      const token = localStorage.getItem("access_token");
+      const response = await fetch("https://hadsxk-production.up.railway.app/api/documents/", {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUploadedDocuments(data.documents || []);
+      }
+    } catch (err) {
+      console.error("Error fetching documents:", err);
+    }
+  };
+
+  const ProtectedRoute = ({ children }) => {
+    if (!isAuthenticated) {
+      return <Navigate to="/login" />;
+    }
+    return (
+      <>
+        <Header 
+          onLogout={logout} // Use logout from AuthContext
+          onClearChat={clearMemory} 
         />
-        <button type="submit" style={{ padding: "0.5rem 1rem", marginLeft: "0.5rem" }}>
-          Ask
-        </button>
-      </form>
-      {loading && <p>Loading...</p>}
-      {response && (
-        <div style={{ marginTop: "1rem", padding: "1rem", border: "1px solid #ccc" }}>
-          <strong>AI Response:</strong>
-          <p>{response}</p>
-        </div>
-      )}
+        {children}
+        
+        {/* Document Upload Modal - still available */}
+        {showDocumentUpload && (
+          <DocumentUpload
+            onUploadSuccess={handleDocumentUploadSuccess}
+            onClose={() => setShowDocumentUpload(false)}
+          />
+        )}
+      </>
+    );
+  };
+
+  return (
+    <div className="app">
+      <Routes>
+        {/* Public route - Login */}
+        <Route path="/login" element={<Login />} />
+        
+        {/* Protected routes */}
+        <Route path="/" element={
+          <ProtectedRoute>
+            <ChatApp 
+              resetTrigger={resetTrigger} 
+              onDocumentUploadClick={() => setShowDocumentUpload(true)}
+              uploadedDocuments={uploadedDocuments}
+              onRefreshDocuments={fetchUserDocuments}
+            />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/profile" element={
+          <ProtectedRoute>
+            <Profile 
+              uploadedDocuments={uploadedDocuments}
+              onRefreshDocuments={fetchUserDocuments}
+            />
+          </ProtectedRoute>
+        } />
+        
+        {/* Add Documents Page Route */}
+        <Route path="/documents" element={
+          <ProtectedRoute>
+            <DocumentsPage 
+              uploadedDocuments={uploadedDocuments}
+              onRefreshDocuments={fetchUserDocuments}
+              onUploadDocument={() => setShowDocumentUpload(true)}
+            />
+          </ProtectedRoute>
+        } />
+        
+        {/* Catch all route */}
+        <Route path="*" element={<Navigate to={isAuthenticated ? "/" : "/login"} />} />
+      </Routes>
     </div>
   );
 }
+
+function App() {
+  return (
+    <Router>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </Router>
+  );
+}
+
+export default App;

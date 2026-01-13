@@ -425,83 +425,92 @@ export default function ChatApp({ resetTrigger, onClearChat }) {
  
      
 
-      {/* Controls Bar */}
-      <div className="control-bar">
-        <div className="control-group">
-          <label>📘 Subject</label>
-          <select
-            value={subject}
-            onChange={(e) => {
-              setSubject(e.target.value);
-              setIsCustomConfirmed(false);
-            }}
-          >
-            <option value="General">General</option>
-            <option value="Python">Python</option>
-            <option value="Math">Math</option>
-            <option value="AI">AI</option>
-            <option value="Data Structures">Data Structures</option>
-            <option value="custom">Custom</option>
-          </select>
+  {/* Controls Bar - Side by Side Layout */}
+<div className="control-bar">
+  {/* Subject and Level in the same row */}
+  <div className="controls-row">
+    {/* Subject Container */}
+    <div className="subject-container">
+      <div className="control-group">
+        <label>📘 Subject</label>
+        <select
+          value={subject}
+          onChange={(e) => {
+            setSubject(e.target.value);
+            setIsCustomConfirmed(false);
+          }}
+        >
+          <option value="General">General</option>
+          <option value="Python">Python</option>
+          <option value="Math">Math</option>
+          <option value="AI">AI</option>
+          <option value="Data Structures">Data Structures</option>
+          <option value="custom">Custom</option>
+        </select>
 
-          {subject === "custom" && (
-            <div className={`custom-input-wrapper ${isCustomConfirmed ? "confirmed" : ""}`}>
-              <input
-                className="custom-subject-input"
-                type="text"
-                placeholder="Enter your subject..."
-                value={customSubject}
-                onFocus={() => {
-                  if (isCustomConfirmed) {
-                    setIsCustomConfirmed(false);
-                  }
-                }}
-                onChange={(e) => {
-                  setCustomSubject(e.target.value);
+        {subject === "custom" && (
+          <div className={`custom-input-wrapper ${isCustomConfirmed ? "confirmed" : ""}`}>
+            <input
+              className="custom-subject-input"
+              type="text"
+              placeholder="Enter your subject..."
+              value={customSubject}
+              onFocus={() => {
+                if (isCustomConfirmed) {
                   setIsCustomConfirmed(false);
-                }}
-              />
-              <button
-                className="confirm-inside-btn"
-                onClick={() => {
-                  if (customSubject.trim()) setIsCustomConfirmed(true);
-                }}
-                disabled={!customSubject.trim() || isCustomConfirmed}
-                title="Confirm subject"
-              >
-                ✔
-              </button>
-            </div>
-          )}
-        </div>
-
-        <div className="control-group">
-          <label>🎯 Level</label>
-          <select value={difficulty} onChange={(e) => setDifficulty(e.target.value)}>
-            <option>Beginner</option>
-            <option>Intermediate</option>
-            <option>Advanced</option>
-          </select>
-        </div>
-
-        {/* Compact Usage Indicator */}
-        <div className="control-group usage-indicator">
-          <label>⚡ Status</label>
-          <div className="usage-mini">
-            <span className={`provider-badge provider-${usage.provider}`}>
-              {usage.provider_name}
-            </span>
-            <span className="requests-count">
-              {usage.requests_today} requests today
-            </span>
-            {usage.using_fallback && (
-              <span className="fallback-indicator" title="Using shared API key">
-                🔄
-              </span>
-            )}
+                }
+              }}
+              onChange={(e) => {
+                setCustomSubject(e.target.value);
+                setIsCustomConfirmed(false);
+              }}
+            />
+            <button
+              className="confirm-inside-btn"
+              onClick={() => {
+                if (customSubject.trim()) setIsCustomConfirmed(true);
+              }}
+              disabled={!customSubject.trim() || isCustomConfirmed}
+              title="Confirm subject"
+            >
+              ✔
+            </button>
           </div>
-        </div>
+        )}
       </div>
+    </div>
+
+    {/* Level Container */}
+    <div className="level-container">
+      <div className="control-group">
+        <label>🎯 Level</label>
+        <select value={difficulty} onChange={(e) => setDifficulty(e.target.value)}>
+          <option>Beginner</option>
+          <option>Intermediate</option>
+          <option>Advanced</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  {/* Compact Usage Indicator - Now appears to the right on desktop, below on mobile */}
+  <div className="control-group usage-indicator">
+    <label>⚡ Status</label>
+    <div className="usage-mini">
+      <span className={`provider-badge provider-${usage.provider}`}>
+        {usage.provider_name}
+      </span>
+      <span className="requests-count">
+        {usage.requests_today} requests today
+      </span>
+      {usage.using_fallback && (
+        <span className="fallback-indicator" title="Using shared API key">
+          🔄
+        </span>
+      )}
+    </div>
+  </div>
+</div>
 
       {/* Messages */}
       <div className="messages">

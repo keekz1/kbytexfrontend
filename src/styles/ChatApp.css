@@ -7,13 +7,6 @@
   padding: 0;
 }
 
-/* Font smoothing and anti-blur fixes */
-html {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
-}
-
 /* Main Container */
 .chat-container {
   max-width: 800px;
@@ -298,17 +291,11 @@ html {
   line-height: 1.4;
   word-wrap: break-word;
   white-space: pre-line;
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-  -webkit-transform: translateZ(0);
-  transform: translateZ(0);
 }
 
 .message.ai .content {
   background-color: #ffffff;
   border: 1px solid #e5e7eb;
-  text-shadow: none;
-  background-image: none !important;
 }
 
 /* Special Message Types */
@@ -605,14 +592,6 @@ html {
   cursor: help;
 }
 
-/* MOBILE BLUR FIXES - ADD THESE RULES */
-
-/* Fix placeholder text blurriness */
-.input-area input::placeholder {
-  opacity: 0.7;
-  font-weight: 400;
-}
-
 /* RESPONSIVE BREAKPOINTS - UPDATED LAYOUT */
 
 /* Desktop: All controls in one row */
@@ -708,60 +687,12 @@ html {
     max-width: 90%;
     padding: 8px 12px;
     font-size: 13px;
-    /* Simplify for mobile - remove gradients */
-    background-color: #ffffff !important;
-    background-image: none !important;
-    border: 1px solid #e5e7eb !important;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
-  }
-  
-  .message.user .content {
-    background-color: #4b7bec !important;
-    background-image: none !important;
   }
   
   .message .avatar {
     width: 28px;
     height: 28px;
     font-size: 1rem;
-  }
-  
-  /* Simplify special messages for mobile */
-  .message.upgrade-message .content,
-  .message.apikey-message .content,
-  .message.limit-message .content,
-  .message.reminder-message .content {
-    background: #fef3c7 !important;
-    background-image: none !important;
-    border-left: 4px solid #f59e0b !important;
-  }
-  
-  /* Simplify API key banner for mobile */
-  .api-key-banner {
-    background: #3b82f6 !important;
-    background-image: none !important;
-  }
-  
-  /* Simplify provider badges for mobile */
-  .provider-badge {
-    background: var(--provider-color) !important;
-    background-image: none !important;
-  }
-  
-  .provider-badge.provider-groq {
-    --provider-color: #059669;
-  }
-  
-  .provider-badge.provider-openai {
-    --provider-color: #1d4ed8;
-  }
-  
-  .provider-badge.provider-anthropic {
-    --provider-color: #7c3aed;
-  }
-  
-  .provider-badge.provider-gemini {
-    --provider-color: #1a73e8;
   }
 }
 

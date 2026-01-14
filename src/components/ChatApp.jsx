@@ -24,8 +24,8 @@ export default function ChatApp({ resetTrigger, onClearChat }) {
   const [needsApiKey, setNeedsApiKey] = useState(false);
   const [lastResponseCost, setLastResponseCost] = useState(null);
   const [apiBannerDismissed, setApiBannerDismissed] = useState(
-  localStorage.getItem("api_banner_dismissed") === "true"
-);
+    localStorage.getItem("api_banner_dismissed") === "true"
+  );
 
   // ADD THIS STATE: Track if we've shown the tip already
   const [hasShownReminder, setHasShownReminder] = useState(false);
@@ -125,10 +125,9 @@ export default function ChatApp({ resetTrigger, onClearChat }) {
         });
         
         // Only show API key banner if not using fallback
-       if (!hasApiKey && !data.usage?.using_fallback && !apiBannerDismissed) {
-  setNeedsApiKey(true);
-}
-
+        if (!hasApiKey && !data.usage?.using_fallback && !apiBannerDismissed) {
+          setNeedsApiKey(true);
+        }
       }
     } catch (err) {
       console.error("Failed to check usage:", err);
@@ -142,7 +141,8 @@ export default function ChatApp({ resetTrigger, onClearChat }) {
       'openai': 'OpenAI',
       'anthropic': 'Anthropic Claude',
       'gemini': 'Google Gemini',
-      'ollama': 'Ollama'
+      'ollama': 'Ollama',
+      'replicate': 'Replicate (Image Generation)'
     };
     return providerMap[provider] || 'AI Provider';
   };
@@ -181,6 +181,12 @@ export default function ChatApp({ resetTrigger, onClearChat }) {
         is_free: true,
         free_tokens: 'Local models - Unlimited',
         link: 'https://ollama.com/'
+      },
+      'replicate': {
+        name: 'Replicate',
+        is_free: false,
+        free_tokens: 'Paid service - Image generation',
+        link: 'https://replicate.com/'
       }
     };
     return providerInfoMap[provider] || {
@@ -190,7 +196,7 @@ export default function ChatApp({ resetTrigger, onClearChat }) {
     };
   };
 
-  // Function to send message - Updated with fallback support
+  // Function to send message - Updated with image generation support
   const sendMessage = async () => {
     if (!input.trim()) return;
 
@@ -219,6 +225,60 @@ export default function ChatApp({ resetTrigger, onClearChat }) {
       });
 
       const data = await res.json();
+      
+      // ===== IMAGE GENERATION RESPONSE HANDLING =====
+      if (data.image_generated) {
+        console.log("🖼️ Image generated successfully:", data.image_url);
+        
+        // Format the image response
+        const imageMessage = {
+          role: "ai",
+          content: data.response || data.answer,
+          image_generated: true,
+          image_url: data.image_url,
+          image_prompt: data.image_prompt,
+          markdown_image: data.markdown_image,
+          html_image: data.html_image,
+          provider: "replicate",
+          usingSystemKey: true
+        };
+        
+        setMessages(prev => [...prev, imageMessage]);
+        
+        // Update usage stats
+        if (data.usage) {
+          setUsage(prev => ({
+            ...prev,
+            requests_today: data.usage.requests_today || prev.requests_today,
+            has_api_key: data.usage.has_api_key,
+            using_fallback: data.usage.using_fallback || false,
+            key_source: data.usage.key_source || 'user'
+          }));
+        }
+        
+        setLoading(false);
+        checkUsage();
+        return;
+      }
+      
+      // Handle image generation failure
+      if (data.image_generation_failed) {
+        console.log("❌ Image generation failed:", data.error);
+        
+        const errorMessage = {
+          role: "ai",
+          content: data.response || data.answer || `Sorry, I couldn't generate that image: ${data.error}`,
+          image_generation_failed: true,
+          error: data.error
+        };
+        
+        setMessages(prev => [...prev, errorMessage]);
+        setLoading(false);
+        checkUsage();
+        return;
+      }
+      
+      // ===== REGULAR TEXT RESPONSE CONTINUES =====
       
       // Update costs with fallback info
       if (data.costs) {
@@ -254,12 +314,11 @@ export default function ChatApp({ resetTrigger, onClearChat }) {
             isApiKeyPrompt: true,
           };
           // Set a timer to show the API key banner
-   if (!apiBannerDismissed) {
-  setTimeout(() => {
-    setNeedsApiKey(true);
-  }, 500);
-}
-
+          if (!apiBannerDismissed) {
+            setTimeout(() => {
+              setNeedsApiKey(true);
+            }, 500);
+          }
         } else {
           // No API key available at all
           apiKeyMessage = {
@@ -377,7 +436,8 @@ export default function ChatApp({ resetTrigger, onClearChat }) {
       'openai': 'gpt-3.5-turbo',
       'anthropic': 'claude-3-haiku',
       'gemini': 'gemini-pro',
-      'ollama': 'llama2'
+      'ollama': 'llama2',
+      'replicate': 'stability-ai/sdxl'
     };
     return modelMap[provider] || 'llama-3.1-8b-instant';
   };
@@ -402,11 +462,50 @@ export default function ChatApp({ resetTrigger, onClearChat }) {
     setLastResponseCost(null);
   };
 
+  // Function to render image in message
+  const renderImageMessage = (message) => {
+    return (
+      <div className="image-message">
+        <div className="image-content" dangerouslySetInnerHTML={{ __html: message.content }} />
+        {message.image_url && (
+          <div className="image-container">
+            <img 
+              src={message.image_url} 
+              alt={message.image_prompt || "Generated image"}
+              className="generated-image"
+              onClick={() => window.open(message.image_url, '_blank')}
+            />
+            <div className="image-actions">
+              <button 
+                className="image-action-btn"
+                onClick={() => window.open(message.image_url, '_blank')}
+              >
+                🔍 View Full Size
+              </button>
+              <button 
+                className="image-action-btn"
+                onClick={() => {
+                  const link = document.createElement('a');
+                  link.href = message.image_url;
+                  link.download = `image-${Date.now()}.png`;
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                }}
+              >
+                💾 Save Image
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="chat-container">
       {/* API Key Recommendation Banner */}
-     {needsApiKey && !apiBannerDismissed && (
-
+      {needsApiKey && !apiBannerDismissed && (
         <div className="api-key-banner">
           <div className="api-key-banner-content">
             <span>
@@ -426,108 +525,106 @@ export default function ChatApp({ resetTrigger, onClearChat }) {
                 </>
               )}
             </span>
-<button
-  className="close-banner"
-  onClick={() => {
-    setNeedsApiKey(false);
-    setApiBannerDismissed(true);
-    localStorage.setItem("api_banner_dismissed", "true");
-  }}
->
-  ×
-</button>
+            <button
+              className="close-banner"
+              onClick={() => {
+                setNeedsApiKey(false);
+                setApiBannerDismissed(true);
+                localStorage.setItem("api_banner_dismissed", "true");
+              }}
+            >
+              ×
+            </button>
           </div>
         </div>
       )}
- 
-     
 
-  {/* Controls Bar - Side by Side Layout */}
-<div className="control-bar">
-  {/* Subject and Level in the same row */}
-  <div className="controls-row">
-    {/* Subject Container */}
-    <div className="subject-container">
-      <div className="control-group">
-        <label>📘 Subject</label>
-        <select
-          value={subject}
-          onChange={(e) => {
-            setSubject(e.target.value);
-            setIsCustomConfirmed(false);
-          }}
-        >
-          <option value="General">General</option>
-          <option value="Python">Python</option>
-          <option value="Math">Math</option>
-          <option value="AI">AI</option>
-          <option value="Data Structures">Data Structures</option>
-          <option value="custom">Custom</option>
-        </select>
-
-        {subject === "custom" && (
-          <div className={`custom-input-wrapper ${isCustomConfirmed ? "confirmed" : ""}`}>
-            <input
-              className="custom-subject-input"
-              type="text"
-              placeholder="Enter your subject..."
-              value={customSubject}
-              onFocus={() => {
-                if (isCustomConfirmed) {
+      {/* Controls Bar - Side by Side Layout */}
+      <div className="control-bar">
+        {/* Subject and Level in the same row */}
+        <div className="controls-row">
+          {/* Subject Container */}
+          <div className="subject-container">
+            <div className="control-group">
+              <label>📘 Subject</label>
+              <select
+                value={subject}
+                onChange={(e) => {
+                  setSubject(e.target.value);
                   setIsCustomConfirmed(false);
-                }
-              }}
-              onChange={(e) => {
-                setCustomSubject(e.target.value);
-                setIsCustomConfirmed(false);
-              }}
-            />
-            <button
-              className="confirm-inside-btn"
-              onClick={() => {
-                if (customSubject.trim()) setIsCustomConfirmed(true);
-              }}
-              disabled={!customSubject.trim() || isCustomConfirmed}
-              title="Confirm subject"
-            >
-              ✔
-            </button>
+                }}
+              >
+                <option value="General">General</option>
+                <option value="Python">Python</option>
+                <option value="Math">Math</option>
+                <option value="AI">AI</option>
+                <option value="Data Structures">Data Structures</option>
+                <option value="custom">Custom</option>
+              </select>
+
+              {subject === "custom" && (
+                <div className={`custom-input-wrapper ${isCustomConfirmed ? "confirmed" : ""}`}>
+                  <input
+                    className="custom-subject-input"
+                    type="text"
+                    placeholder="Enter your subject..."
+                    value={customSubject}
+                    onFocus={() => {
+                      if (isCustomConfirmed) {
+                        setIsCustomConfirmed(false);
+                      }
+                    }}
+                    onChange={(e) => {
+                      setCustomSubject(e.target.value);
+                      setIsCustomConfirmed(false);
+                    }}
+                  />
+                  <button
+                    className="confirm-inside-btn"
+                    onClick={() => {
+                      if (customSubject.trim()) setIsCustomConfirmed(true);
+                    }}
+                    disabled={!customSubject.trim() || isCustomConfirmed}
+                    title="Confirm subject"
+                  >
+                    ✔
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
-        )}
-      </div>
-    </div>
 
-    {/* Level Container */}
-    <div className="level-container">
-      <div className="control-group">
-        <label>🎯 Level</label>
-        <select value={difficulty} onChange={(e) => setDifficulty(e.target.value)}>
-          <option>Beginner</option>
-          <option>Intermediate</option>
-          <option>Advanced</option>
-        </select>
-      </div>
-    </div>
-  </div>
+          {/* Level Container */}
+          <div className="level-container">
+            <div className="control-group">
+              <label>🎯 Level</label>
+              <select value={difficulty} onChange={(e) => setDifficulty(e.target.value)}>
+                <option>Beginner</option>
+                <option>Intermediate</option>
+                <option>Advanced</option>
+              </select>
+            </div>
+          </div>
+        </div>
 
-  {/* Compact Usage Indicator - Now appears to the right on desktop, below on mobile */}
-  <div className="control-group usage-indicator">
-    <label>⚡ Status</label>
-    <div className="usage-mini">
-      <span className={`provider-badge provider-${usage.provider}`}>
-        {usage.provider_name}
-      </span>
-      <span className="requests-count">
-        {usage.requests_today} requests today
-      </span>
-      {usage.using_fallback && (
-        <span className="fallback-indicator" title="Using shared API key">
-          🔄
-        </span>
-      )}
-    </div>
-  </div>
-</div>
+        {/* Compact Usage Indicator - Now appears to the right on desktop, below on mobile */}
+        <div className="control-group usage-indicator">
+          <label>⚡ Status</label>
+          <div className="usage-mini">
+            <span className={`provider-badge provider-${usage.provider}`}>
+              {usage.provider_name}
+            </span>
+            <span className="requests-count">
+              {usage.requests_today} requests today
+            </span>
+            {usage.using_fallback && (
+              <span className="fallback-indicator" title="Using shared API key">
+                🔄
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
 
       {/* Messages */}
       <div className="messages">
@@ -536,13 +633,22 @@ export default function ChatApp({ resetTrigger, onClearChat }) {
             key={idx}
             className={`message ${msg.role === "user" ? "user" : "ai"} ${
               msg.isUpgradePrompt ? 'upgrade-message' : ''
-            } ${msg.isApiKeyPrompt ? 'apikey-message' : ''} ${msg.isLimitMessage ? 'limit-message' : ''} ${msg.isReminder ? 'reminder-message' : ''}`}
+            } ${msg.isApiKeyPrompt ? 'apikey-message' : ''} ${msg.isLimitMessage ? 'limit-message' : ''} ${msg.isReminder ? 'reminder-message' : ''} ${msg.image_generated ? 'image-message' : ''}`}
           >
             <div className="avatar">
-              {msg.role === "user" ? "👤" : msg.provider === 'OpenAI' ? '⚡' : '🤖'}
+              {msg.role === "user" ? "👤" : 
+               msg.image_generated ? "🎨" :
+               msg.provider === 'OpenAI' ? '⚡' : '🤖'}
             </div>
             <div className="content">
-              {msg.content}
+              {msg.image_generated ? (
+                renderImageMessage(msg)
+              ) : (
+                <div dangerouslySetInnerHTML={{ 
+                  __html: msg.content.replace(/\n/g, '<br/>')
+                }} />
+              )}
+              
               {msg.isUpgradePrompt && (
                 <div className="upgrade-suggestion">
                   <p>💡 <strong>Want premium features?</strong></p>
@@ -598,7 +704,7 @@ export default function ChatApp({ resetTrigger, onClearChat }) {
       <div className="input-area">
         <input
           type="text"
-          placeholder={`Ask your  assistant (using ${usage.provider_name})...`}
+          placeholder={`Ask your assistant (using ${usage.provider_name}) or request an image...`}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyPress={handleKeyPress}

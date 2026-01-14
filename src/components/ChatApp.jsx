@@ -252,69 +252,75 @@ export default function ChatApp({ resetTrigger, onClearChat }) {
     return cleaned + ", high quality, detailed, professional";
   };
 
-  // Function to handle direct image generation
-  const generateImage = async (prompt) => {
-    setImageGenerating(true);
-    setLoading(true);
+// In your frontend ChatApp.jsx, update the generateImage function:
+const generateImage = async (prompt) => {
+  setImageGenerating(true);
+  setLoading(true);
+  
+  try {
+    console.log("🖼️ Generating image with prompt:", prompt);
     
-    try {
-      const res = await fetch("https://hadsxk-production.up.railway.app/api/generate-image/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-        },
-        body: JSON.stringify({
-          prompt: prompt,
-          generate_image: true
-        }),
-      });
+    const res = await fetch("https://hadsxk-production.up.railway.app/api/generate-image/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+      },
+      body: JSON.stringify({
+        prompt: prompt,
+        // Remove generate_image: true if your backend doesn't expect it
+      }),
+    });
 
-      const data = await res.json();
-      
-      if (data.success) {
-        // Create image message
-        const imageMessage = {
-          role: "ai",
-          content: data.response || `🎨 Image generated: ${prompt}`,
-          image_url: data.image_url,
-          image_prompt: data.image_prompt || prompt,
-          isImage: true,
-          provider: "Replicate",
-          usingSystemKey: true
-        };
-        
-        setMessages(prev => [...prev, imageMessage]);
-        
-        // Update usage stats
-        checkUsage();
-        
-        return { success: true, data };
-      } else {
-        // Fallback to text response if image generation fails
-        const errorMessage = {
-          role: "ai",
-          content: `❌ Image generation failed: ${data.error || "Unknown error"}\n\n` +
-                   `I'll respond to your request with text instead.`,
-          isError: true
-        };
-        setMessages(prev => [...prev, errorMessage]);
-        return { success: false, error: data.error };
-      }
-    } catch (err) {
-      console.error("Image generation error:", err);
-      const errorMessage = {
-        role: "ai",
-        content: "❌ Image generation service unavailable. Please try again later or use text chat.",
-        isError: true
-      };
-      setMessages(prev => [...prev, errorMessage]);
-      return { success: false, error: err.message };
-    } finally {
-      setImageGenerating(false);
-      setLoading(false);
+    console.log("Response status:", res.status);
+    
+    const data = await res.json();
+    console.log("Response data:", data);
+    
+    if (!res.ok) {
+      throw new Error(data.error || `HTTP ${res.status}: ${data.message || 'Unknown error'}`);
     }
-  };
+    
+    if (data.success) {
+      // Create image message
+      const imageMessage = {
+        role: "ai",
+        content: data.response || `🎨 Image generated: ${prompt}`,
+        image_url: data.image_url,
+        image_prompt: data.image_prompt || prompt,
+        isImage: true,
+        provider: "Replicate",
+        usingSystemKey: true
+      };
+      
+      setMessages(prev => [...prev, imageMessage]);
+      
+      // Update usage stats
+      checkUsage();
+      
+      return { success: true, data };
+    } else {
+      throw new Error(data.error || "Image generation failed");
+    }
+  } catch (err) {
+    console.error("❌ Image generation error:", err);
+    const errorMessage = {
+      role: "ai",
+      content: `❌ Image generation failed: ${err.message}\n\n` +
+               `This might be because:\n` +
+               `1. Replicate API is not configured\n` +
+               `2. No credits remaining on Replicate account\n` +
+               `3. Service temporarily unavailable\n\n` +
+               `Please try again later or use text chat.`,
+      isError: true
+    };
+    setMessages(prev => [...prev, errorMessage]);
+    return { success: false, error: err.message };
+  } finally {
+    setImageGenerating(false);
+    setLoading(false);
+  }
+};
 
   // Function to send message - Updated with image generation support
   const sendMessage = async () => {

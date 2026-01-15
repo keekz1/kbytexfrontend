@@ -1,4 +1,4 @@
-// pages/LandingPage.jsx
+// pages/LandingPage.jsx - Updated version
 import { Link } from "react-router-dom";
 import "./LandingPage.css";
 
@@ -18,7 +18,7 @@ const LandingPage = () => {
             </div>
             <div className="nav-auth">
               <Link to="/login" className="btn-login">Sign In</Link>
-              <Link to="/register" className="btn-signup">Sign Up Free</Link>
+              <Link to="/login" className="btn-signup">Sign Up Free</Link> {/* Changed from /register to /login */}
             </div>
           </nav>
         </div>
@@ -38,7 +38,7 @@ const LandingPage = () => {
                 <Link to="/free-chat" className="btn-hero-primary">
                   🚀 Try Free Chat Now
                 </Link>
-                <Link to="/register" className="btn-hero-secondary">
+                <Link to="/login" className="btn-hero-secondary"> {/* Changed from /register to /login */}
                   ✨ Sign Up for More Features
                 </Link>
               </div>
@@ -126,7 +126,7 @@ const LandingPage = () => {
               <Link to="/free-chat" className="btn-cta-primary">
                 🚀 Try Free Chat
               </Link>
-              <Link to="/register" className="btn-cta-secondary">
+              <Link to="/login" className="btn-cta-secondary"> {/* Changed from /register to /login */}
                 ✨ Sign Up Free
               </Link>
             </div>
@@ -139,7 +139,7 @@ const LandingPage = () => {
           <p>© 2024 AI Study Assistant. All rights reserved.</p>
           <div className="footer-links">
             <Link to="/login">Sign In</Link>
-            <Link to="/register">Sign Up</Link>
+            <Link to="/login">Sign Up</Link> {/* Changed from /register to /login */}
             <a href="/free-chat">Free Chat</a>
             <a href="#features">Features</a>
           </div>

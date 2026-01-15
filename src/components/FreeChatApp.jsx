@@ -1,5 +1,6 @@
-// components/FreeChatApp.jsx
+// components/FreeChatApp.jsx - Updated version
 import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom"; // Add this import
 import "./ChatApp.css";
 
 const FreeChatApp = () => {
@@ -7,26 +8,8 @@ const FreeChatApp = () => {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
-  const [chatEnabled, setChatEnabled] = useState(true);
   const [signupSuggestion, setSignupSuggestion] = useState(null);
-  const [freeFeatures, setFreeFeatures] = useState(null);
-
-  // Fetch free features info on mount
-  useEffect(() => {
-    fetchFreeFeatures();
-  }, []);
-
-  const fetchFreeFeatures = async () => {
-    try {
-      const response = await fetch("https://hadsxk-production.up.railway.app/api/free-features/");
-      if (response.ok) {
-        const data = await response.json();
-        setFreeFeatures(data.free_features);
-      }
-    } catch (error) {
-      console.error("Error fetching free features:", error);
-    }
-  };
+  const navigate = useNavigate(); // Add this
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -37,7 +20,7 @@ const FreeChatApp = () => {
   }, [messages]);
 
   const handleSendMessage = async () => {
-    if (!input.trim() || isLoading || !chatEnabled) return;
+    if (!input.trim() || isLoading) return;
 
     const userMessage = {
       id: Date.now(),
@@ -120,7 +103,7 @@ const FreeChatApp = () => {
                   "Save chat history",
                   "Higher limits"
                 ],
-                signup_url: "/register",
+                signup_url: "/login", // Changed from /register to /login
                 login_url: "/login"
               });
             }
@@ -153,7 +136,7 @@ const FreeChatApp = () => {
           "Image generation",
           "Document upload"
         ],
-        signup_url: "/register",
+        signup_url: "/login", // Changed from /register to /login
         login_url: "/login"
       });
     } finally {
@@ -174,11 +157,11 @@ const FreeChatApp = () => {
   };
 
   const handleSignUpClick = () => {
-    window.location.href = "/register";
+    navigate("/login"); // Changed from /register to /login
   };
 
   const handleLoginClick = () => {
-    window.location.href = "/login";
+    navigate("/login");
   };
 
   return (
@@ -237,7 +220,7 @@ const FreeChatApp = () => {
                 <li>🔍 Basic information lookup</li>
               </ul>
               <div className="upgrade-cta">
-                <p>Want more? <a href="/register">Sign up free</a> for:</p>
+                <p>Want more? <a href="/login">Sign up free</a> for:</p>
                 <ul>
                   <li>🖼️ Image generation</li>
                   <li>📄 Document analysis</li>
@@ -294,7 +277,7 @@ const FreeChatApp = () => {
           onChange={(e) => setInput(e.target.value)}
           onKeyPress={handleKeyPress}
           placeholder="Type your message here... (Try: 'Explain quantum physics' or 'Help me with math homework')"
-          disabled={isLoading || !chatEnabled}
+          disabled={isLoading}
           rows="3"
         />
         <div className="input-actions">
@@ -306,7 +289,7 @@ const FreeChatApp = () => {
           </div>
           <button
             onClick={handleSendMessage}
-            disabled={!input.trim() || isLoading || !chatEnabled}
+            disabled={!input.trim() || isLoading}
             className="btn-send"
           >
             {isLoading ? "Thinking..." : "Send"}

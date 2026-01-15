@@ -4,13 +4,12 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import { AuthProvider } from "./context/AuthContext";
 import { useAuth } from "./context/AuthContext";
 import ChatApp from "./components/ChatApp";
-import FreeChatApp from "./components/FreeChatApp"; // Add this new component
-import Login from "./pages/Login";
-import Register from "./pages/Register"; // Add register page
+import FreeChatApp from "./components/FreeChatApp";
+import Login from "./pages/Login"; // This handles both login and registration
 import Profile from "./pages/profile";
 import DocumentsPage from "./pages/DocumentPage";
 import DocumentUpload from "./components/DocumentUpload"; 
-import LandingPage from "./pages/LandingPage"; // Add landing page
+import LandingPage from "./pages/LandingPage";
 import "./styles/Header.css";
 import Header from "./components/Header";
 
@@ -121,28 +120,35 @@ function AppContent() {
     );
   };
 
-  // Public Header for free chat (optional)
-  const PublicHeader = () => (
-    <header className="header">
-      <div className="header-left">
-        <h1>AI Study Assistant</h1>
-      </div>
-      <div className="header-right">
-        <button 
-          className="btn-primary"
-          onClick={() => window.location.href = '/login'}
-        >
-          Sign In
-        </button>
-        <button 
-          className="btn-secondary"
-          onClick={() => window.location.href = '/register'}
-        >
-          Sign Up
-        </button>
-      </div>
-    </header>
-  );
+  // Public Header for free chat
+  const PublicHeader = () => {
+    const { isAuthenticated } = useAuth();
+    
+    return (
+      <header className="header">
+        <div className="header-left">
+          <h1>AI Study Assistant</h1>
+        </div>
+        <div className="header-right">
+          {isAuthenticated ? (
+            <button 
+              className="btn-primary"
+              onClick={() => window.location.href = '/'}
+            >
+              Go to Dashboard
+            </button>
+          ) : (
+            <button 
+              className="btn-primary"
+              onClick={() => window.location.href = '/login'}
+            >
+              Sign In / Up
+            </button>
+          )}
+        </div>
+      </header>
+    );
+  };
 
   return (
     <div className="app">
@@ -156,7 +162,7 @@ function AppContent() {
           </>
         } />
         <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        {/* No /register route needed - handled in Login.js */}
         
         {/* Protected routes - require authentication */}
         <Route path="/chat" element={
@@ -188,9 +194,6 @@ function AppContent() {
             />
           </ProtectedRoute>
         } />
-        
-        {/* Redirect from old chat path */}
-        <Route path="/old-chat" element={<Navigate to="/chat" />} />
         
         {/* Catch all route */}
         <Route path="*" element={<Navigate to="/" />} />

@@ -1,7 +1,7 @@
 // components/FreeChatApp.jsx - Updated version
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom"; // Add this import
-import "../styles/FreeChatApp.css";
+import "../styles/ChatApp.css";
 
 const FreeChatApp = () => {
   const [messages, setMessages] = useState([]);

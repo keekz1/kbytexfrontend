@@ -1,331 +1,212 @@
-// components/FreeChatApp.jsx - Updated version
-import { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom"; // Add this import
-import "./ChatApp.css";
+// App.jsx
+import { useState, useEffect } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+import { useAuth } from "./context/AuthContext";
+import ChatApp from "./components/ChatApp";
+import FreeChatApp from "./components/FreeChatApp"; // Add this new component
+import Login from "./pages/Login";
+import Register from "./pages/Register"; // Add register page
+import Profile from "./pages/profile";
+import DocumentsPage from "./pages/DocumentPage";
+import DocumentUpload from "./components/DocumentUpload"; 
+import LandingPage from "./pages/LandingPage"; // Add landing page
+import "./styles/Header.css";
+import Header from "./components/Header";
 
-const FreeChatApp = () => {
-  const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef(null);
-  const [signupSuggestion, setSignupSuggestion] = useState(null);
-  const navigate = useNavigate(); // Add this
+// Create a wrapper component that uses AuthContext
+function AppContent() {
+  const { isAuthenticated, logout, user } = useAuth();
+  const [resetTrigger, setResetTrigger] = useState(false);
+  const [showDocumentUpload, setShowDocumentUpload] = useState(false);
+  const [uploadedDocuments, setUploadedDocuments] = useState([]);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
+  // Fetch user documents when authenticated
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const handleSendMessage = async () => {
-    if (!input.trim() || isLoading) return;
-
-    const userMessage = {
-      id: Date.now(),
-      text: input,
-      sender: "user",
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
-
-    setMessages(prev => [...prev, userMessage]);
-    setInput("");
-    setIsLoading(true);
-
-    try {
-      // Try anonymous chat endpoint
-      const response = await fetch("https://hadsxk-production.up.railway.app/api/anonymous-chat/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          prompt: input
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        const aiMessage = {
-          id: Date.now() + 1,
-          text: data.answer,
-          sender: "ai",
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          isFreeTier: data.is_free_tier,
-          model: data.model,
-          provider: data.provider
-        };
-
-        setMessages(prev => [...prev, aiMessage]);
-        
-        // Show signup suggestion if available
-        if (data.signup_suggestion) {
-          setSignupSuggestion(data.signup_suggestion);
-        }
-      } else {
-        // If anonymous chat fails, try the main endpoint without auth
+    const fetchUserDocuments = async () => {
+      if (isAuthenticated) {
         try {
-          const fallbackResponse = await fetch("https://hadsxk-production.up.railway.app/api/ai-chat/", {
-            method: "POST",
+          const token = localStorage.getItem("access_token");
+          const response = await fetch("https://hadsxk-production.up.railway.app/api/documents/", {
             headers: {
-              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`,
             },
-            body: JSON.stringify({
-              prompt: input,
-              subject: "General",
-              difficulty: "Beginner"
-            }),
           });
 
-          const fallbackData = await fallbackResponse.json();
-
-          if (fallbackData.success) {
-            const aiMessage = {
-              id: Date.now() + 1,
-              text: fallbackData.answer,
-              sender: "ai",
-              timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-              isFreeTier: true,
-              model: fallbackData.provider,
-              isAnonymous: true
-            };
-            setMessages(prev => [...prev, aiMessage]);
-
-            if (fallbackData.upgrade_suggestion) {
-              setSignupSuggestion({
-                message: "✨ Unlock more features by signing up!",
-                features: [
-                  "Longer conversations",
-                  "Image generation",
-                  "Document analysis",
-                  "Save chat history",
-                  "Higher limits"
-                ],
-                signup_url: "/login", // Changed from /register to /login
-                login_url: "/login"
-              });
-            }
-          } else {
-            throw new Error(fallbackData.error || "Chat failed");
+          if (response.ok) {
+            const data = await response.json();
+            setUploadedDocuments(data.documents || []);
           }
-        } catch (fallbackError) {
-          throw new Error(data.error || "Chat service unavailable");
+        } catch (err) {
+          console.error("Error fetching documents:", err);
         }
       }
-    } catch (error) {
-      console.error("Chat error:", error);
-      
-      const errorMessage = {
-        id: Date.now() + 1,
-        text: `⚠️ ${error.message || "Service temporarily unavailable. Please try again."}`,
-        sender: "system",
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        isError: true
-      };
-      
-      setMessages(prev => [...prev, errorMessage]);
-      
-      // Suggest signup on error
-      setSignupSuggestion({
-        message: "Having issues? Sign up for more reliable access!",
-        features: [
-          "Priority access",
-          "More stable service",
-          "Image generation",
-          "Document upload"
-        ],
-        signup_url: "/login", // Changed from /register to /login
-        login_url: "/login"
+    };
+
+    fetchUserDocuments();
+  }, [isAuthenticated]);
+
+  const clearMemory = async () => {
+    try {
+      const token = localStorage.getItem("access_token");
+      if (!token) {
+        alert("You need to be logged in to clear chat history");
+        return;
+      }
+
+      const res = await fetch("https://hadsxk-production.up.railway.app/api/clear-memory/", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
       });
-    } finally {
-      setIsLoading(false);
+
+      const data = await res.json();
+      alert(data.message);
+      setResetTrigger(prev => !prev);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to clear chat");
     }
   };
 
-  const handleKeyPress = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
+  const handleDocumentUploadSuccess = (data) => {
+    setUploadedDocuments(prev => [data.document, ...prev]);
+    setShowDocumentUpload(false);
+    alert(`✅ Document "${data.document.file_name}" uploaded successfully!`);
+    fetchUserDocuments();
+  };
+
+  const fetchUserDocuments = async () => {
+    try {
+      const token = localStorage.getItem("access_token");
+      const response = await fetch("https://hadsxk-production.up.railway.app/api/documents/", {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUploadedDocuments(data.documents || []);
+      }
+    } catch (err) {
+      console.error("Error fetching documents:", err);
     }
   };
 
-  const clearChat = () => {
-    setMessages([]);
-    setSignupSuggestion(null);
+  // Protected Route component for authenticated-only features
+  const ProtectedRoute = ({ children }) => {
+    if (!isAuthenticated) {
+      return <Navigate to="/login" />;
+    }
+    return (
+      <>
+        <Header 
+          onLogout={logout}
+          onClearChat={clearMemory} 
+          user={user}
+        />
+        {children}
+        
+        {/* Document Upload Modal */}
+        {showDocumentUpload && (
+          <DocumentUpload
+            onUploadSuccess={handleDocumentUploadSuccess}
+            onClose={() => setShowDocumentUpload(false)}
+          />
+        )}
+      </>
+    );
   };
 
-  const handleSignUpClick = () => {
-    navigate("/login"); // Changed from /register to /login
-  };
-
-  const handleLoginClick = () => {
-    navigate("/login");
-  };
+  // Public Header for free chat (optional)
+  const PublicHeader = () => (
+    <header className="header">
+      <div className="header-left">
+        <h1>AI Study Assistant</h1>
+      </div>
+      <div className="header-right">
+        <button 
+          className="btn-primary"
+          onClick={() => window.location.href = '/login'}
+        >
+          Sign In
+        </button>
+        <button 
+          className="btn-secondary"
+          onClick={() => window.location.href = '/register'}
+        >
+          Sign Up
+        </button>
+      </div>
+    </header>
+  );
 
   return (
-    <div className="chat-app">
-      <div className="chat-header">
-        <h2>Free AI Chat</h2>
-        <div className="chat-info">
-          <span className="model-badge">Free Tier</span>
-          <span className="model-badge">Groq AI</span>
-          <button className="btn-clear" onClick={clearChat}>
-            Clear Chat
-          </button>
-        </div>
-      </div>
-
-      {/* Signup Suggestion Banner */}
-      {signupSuggestion && (
-        <div className="signup-banner">
-          <div className="signup-content">
-            <h4>{signupSuggestion.message}</h4>
-            <ul>
-              {signupSuggestion.features.map((feature, index) => (
-                <li key={index}>✓ {feature}</li>
-              ))}
-            </ul>
-            <div className="signup-buttons">
-              <button className="btn-primary" onClick={handleSignUpClick}>
-                Sign Up Free
-              </button>
-              <button className="btn-secondary" onClick={handleLoginClick}>
-                Sign In
-              </button>
-            </div>
-          </div>
-          <button 
-            className="close-banner" 
-            onClick={() => setSignupSuggestion(null)}
-          >
-            ×
-          </button>
-        </div>
-      )}
-
-      {/* Chat Container */}
-      <div className="chat-container">
-        {messages.length === 0 ? (
-          <div className="welcome-message">
-            <h3>Welcome to Free AI Chat! 🚀</h3>
-            <p>Ask me anything! I'm here to help you learn and explore.</p>
-            <div className="free-features">
-              <h4>Free Features:</h4>
-              <ul>
-                <li>💬 Chat with AI for free</li>
-                <li>⚡ Fast responses with Groq AI</li>
-                <li>🎯 Help with study questions</li>
-                <li>🔍 Basic information lookup</li>
-              </ul>
-              <div className="upgrade-cta">
-                <p>Want more? <a href="/login">Sign up free</a> for:</p>
-                <ul>
-                  <li>🖼️ Image generation</li>
-                  <li>📄 Document analysis</li>
-                  <li>💾 Save chat history</li>
-                  <li>📈 Higher limits</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="messages">
-            {messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={`message ${msg.sender} ${msg.isError ? 'error' : ''}`}
-              >
-                <div className="message-header">
-                  <span className="message-sender">
-                    {msg.sender === "user" ? "You" : 
-                     msg.sender === "ai" ? "AI Assistant" : "System"}
-                    {msg.model && <span className="model-tag"> ({msg.model})</span>}
-                    {msg.isFreeTier && <span className="free-tag"> Free</span>}
-                  </span>
-                  <span className="message-time">{msg.timestamp}</span>
-                </div>
-                <div className="message-content">
-                  {msg.text}
-                </div>
-              </div>
-            ))}
-            {isLoading && (
-              <div className="message ai">
-                <div className="message-header">
-                  <span className="message-sender">AI Assistant</span>
-                </div>
-                <div className="message-content typing">
-                  <div className="typing-indicator">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                  </div>
-                </div>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-        )}
-      </div>
-
-      {/* Input Area */}
-      <div className="input-container">
-        <textarea
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyPress={handleKeyPress}
-          placeholder="Type your message here... (Try: 'Explain quantum physics' or 'Help me with math homework')"
-          disabled={isLoading}
-          rows="3"
-        />
-        <div className="input-actions">
-          <div className="input-info">
-            <span className="free-indicator">✨ Free Chat • No Login Required</span>
-            {messages.length > 0 && (
-              <span className="message-count">{messages.length} messages</span>
-            )}
-          </div>
-          <button
-            onClick={handleSendMessage}
-            disabled={!input.trim() || isLoading}
-            className="btn-send"
-          >
-            {isLoading ? "Thinking..." : "Send"}
-          </button>
-        </div>
+    <div className="app">
+      <Routes>
+        {/* Public routes */}
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/free-chat" element={
+          <>
+            <PublicHeader />
+            <FreeChatApp />
+          </>
+        } />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
         
-        {/* Quick Action Buttons */}
-        <div className="quick-actions">
-          <button 
-            className="quick-btn"
-            onClick={() => setInput("Explain quantum physics in simple terms")}
-          >
-            Quantum Physics
-          </button>
-          <button 
-            className="quick-btn"
-            onClick={() => setInput("Help me solve a math problem: 2x + 5 = 15")}
-          >
-            Math Help
-          </button>
-          <button 
-            className="quick-btn"
-            onClick={() => setInput("What are the benefits of signing up?")}
-          >
-            Sign Up Benefits
-          </button>
-          <button 
-            className="quick-btn btn-upgrade"
-            onClick={handleSignUpClick}
-          >
-            🔓 Unlock Premium
-          </button>
-        </div>
-      </div>
+        {/* Protected routes - require authentication */}
+        <Route path="/chat" element={
+          <ProtectedRoute>
+            <ChatApp 
+              resetTrigger={resetTrigger} 
+              onDocumentUploadClick={() => setShowDocumentUpload(true)}
+              uploadedDocuments={uploadedDocuments}
+              onRefreshDocuments={fetchUserDocuments}
+            />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/profile" element={
+          <ProtectedRoute>
+            <Profile 
+              uploadedDocuments={uploadedDocuments}
+              onRefreshDocuments={fetchUserDocuments}
+            />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/documents" element={
+          <ProtectedRoute>
+            <DocumentsPage 
+              uploadedDocuments={uploadedDocuments}
+              onRefreshDocuments={fetchUserDocuments}
+              onUploadDocument={() => setShowDocumentUpload(true)}
+            />
+          </ProtectedRoute>
+        } />
+        
+        {/* Redirect from old chat path */}
+        <Route path="/old-chat" element={<Navigate to="/chat" />} />
+        
+        {/* Catch all route */}
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
     </div>
   );
-};
+}
 
-export default FreeChatApp;
+function App() {
+  return (
+    <Router>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </Router>
+  );
+}
+
+export default App;
